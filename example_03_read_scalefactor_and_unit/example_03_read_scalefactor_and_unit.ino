@@ -151,7 +151,7 @@ void setup() {
    }
 
     if (VERBOSE_OUTPUT) {
-      Serial.println();
+      /*Serial.println();
       Serial.println("-----------------------");
       Serial.print("Scale factor: ");
       Serial.println(scale_factor);
@@ -161,6 +161,7 @@ void setup() {
       Serial.println(unit_code);
       Serial.println("-----------------------");
       Serial.println();
+      */
     }
 
     // Switch to measurement mode
@@ -189,12 +190,7 @@ void loop() {
     raw_sensor_value  = Wire.read() << 8; // read the MSB from the sensor
     raw_sensor_value |= Wire.read();      // read the LSB from the sensor
     sensor_reading = ((int16_t) raw_sensor_value) / ((float) scale_factor);
-
-    Serial.print("Sensor reading: ");
-    Serial.print(sensor_reading);
-    Serial.print(" ");
-    Serial.println(unit);
+    
+    Serial.println(sensor_reading);
   }
-
-  delay(3000); // milliseconds delay between reads (for demo purposes)
 }
