@@ -40,7 +40,7 @@
 
 const int ADDRESS = 0x40; // Standard address for Liquid Flow Sensors
 
-const bool VERBOSE_OUTPUT = true; // set to false for less verbose output
+const bool VERBOSE_OUTPUT = false; // set to false for less verbose output
 
 // EEPROM Addresses for factor and unit of calibration fields 0,1,2,3,4.
 const uint16_t SCALE_FACTOR_ADDRESSES[] = {0x2B6, 0x5B6, 0x8B6, 0xBB6, 0xEB6};
@@ -151,7 +151,7 @@ void setup() {
    }
 
     if (VERBOSE_OUTPUT) {
-      /*Serial.println();
+      Serial.println();
       Serial.println("-----------------------");
       Serial.print("Scale factor: ");
       Serial.println(scale_factor);
@@ -161,7 +161,6 @@ void setup() {
       Serial.println(unit_code);
       Serial.println("-----------------------");
       Serial.println();
-      */
     }
 
     // Switch to measurement mode

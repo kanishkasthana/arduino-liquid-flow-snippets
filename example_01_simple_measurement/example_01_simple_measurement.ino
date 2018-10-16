@@ -86,14 +86,7 @@ void loop() {
       raw_sensor_value  = Wire.read() << 8; // read the MSB from the sensor
       raw_sensor_value |= Wire.read();      // read the LSB from the sensor
 
-      Serial.print("raw value from sensor: ");
-      Serial.print(raw_sensor_value);
-
-      signed_sensor_value = (int16_t) raw_sensor_value;
-      Serial.print(", signed value: ");
-      Serial.println(signed_sensor_value);
+      Serial.println(raw_sensor_value);
     }
   }
-
-  delay(1000); // milliseconds delay between reads (for demo purposes)
 }
