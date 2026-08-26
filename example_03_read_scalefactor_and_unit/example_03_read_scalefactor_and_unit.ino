@@ -67,7 +67,11 @@ void setup() {
   byte crc1;
   byte crc2;
 
-  Serial.begin(9600); // initialize serial communication
+  // 115200 rather than 9600: a response line now transmits in under a
+  // millisecond, so a request is answered before the host can race it.
+  // The host side (ChronoSeq2 initialisation cell) must open the port at
+  // the same rate.
+  Serial.begin(115200);
   Wire.begin();       // join i2c bus (address optional for master)
 
   do {
@@ -174,22 +178,45 @@ void setup() {
 }
 
 // -----------------------------------------------------------------------------
-// The Arduino loop routine runs over and over again forever:
+// The Arduino loop routine: REQUEST-RESPONSE, changed 25 Aug 2026.
+//
+// The old loop streamed Serial.println(flow) flat out, saturating the
+// 9600-baud link (~120 lines/s). The host's receive buffer was always
+// brimming, its stale-data flush landed mid-line about once per thousand
+// reads, and the orphaned fragments parsed as wrong numbers: "11.40"
+// losing its first byte read 1.40, and two fragments concatenated into
+// readings like 2224.55. A host-side workaround (discard one line after
+// any flush) contained it; this removes the cause.
+//
+// Now the sensor speaks only when spoken to: the host sends any single
+// byte, the Nano performs one I2C measurement read and replies with one
+// line. Nothing streams, nothing buffers, nothing can be stale or torn,
+// and the first read after an idle period is as fresh as any other --
+// which also retires the historical "first read returns a buffered
+// 17.000" failure. On I2C trouble it replies ERR so the host can retry
+// rather than time out.
 // -----------------------------------------------------------------------------
 void loop() {
-  int ret;
   uint16_t raw_sensor_value;
   float sensor_reading;
 
-  Wire.requestFrom(ADDRESS, 2); // reading 2 bytes ignores the CRC byte
-  if (Wire.available() < 2) {
-    Serial.println("Error while reading flow measurement");
+  if (Serial.available() > 0) {
+    // Drain every queued request byte so replies can never stack up:
+    // one exchange in flight at a time, no matter how the host behaves.
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
 
-  } else {
-    raw_sensor_value  = Wire.read() << 8; // read the MSB from the sensor
-    raw_sensor_value |= Wire.read();      // read the LSB from the sensor
-    sensor_reading = ((int16_t) raw_sensor_value) / ((float) scale_factor);
-    
-    Serial.println(sensor_reading);
+    Wire.requestFrom(ADDRESS, 2); // reading 2 bytes ignores the CRC byte
+    if (Wire.available() < 2) {
+      Serial.println("ERR");
+
+    } else {
+      raw_sensor_value  = Wire.read() << 8; // read the MSB from the sensor
+      raw_sensor_value |= Wire.read();      // read the LSB from the sensor
+      sensor_reading = ((int16_t) raw_sensor_value) / ((float) scale_factor);
+
+      Serial.println(sensor_reading);
+    }
   }
 }
